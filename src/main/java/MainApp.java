@@ -3,6 +3,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -12,7 +13,7 @@ public class MainApp implements Runnable {
 
     private void startApp() {
         scanner = new Scanner(System.in);
-        System.out.println("Wybierz po czym chcesz znaleźć miejsce dla którego wyświetlisz pogodę \n0 - Zakończ działanie \n1 - Nazwa Miasta \n2 - Kod pocztowy");
+        System.out.println("Wybierz po czym chcesz znaleźć miejsce dla którego wyświetlisz pogodę \n0 - Zakończ działanie \n1 - Nazwa Miasta \n2 - Kod pocztowy \n3 - Wsppółrzędne geograficzne");
         Integer name = scanner.nextInt();
         chooseTypeSearching(name);
     }
@@ -29,56 +30,55 @@ public class MainApp implements Runnable {
                 connectByZipCode();
                 startApp();
                 break;
+            case 3:
+                connectByCoords();
+                startApp();
+                break;
         }
+    }
+    public void connectByCoords(){
+        System.out.println("podaj szerokość geograficzną:");
+        String N = scanner.next();
+        System.out.println("podaj długość geograficzną:");
+        String W = scanner.next();
+        try{
+            String response = new HttpService().connect(Config.APP_URL+"?lat=" +N+"&lon="+W+"&appid="+ Config.APP_ID+"&lang=pl");
+            parseJson(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void connectByCityName() {
         //TODO
-
         System.out.println("Podaj nazwę miasta: ");
         String cityName = scanner.next();
         try {
-            String response = new HttpService().connect(Config.APP_URL + "?q=" + cityName  + "&appid=" + Config.APP_ID);
+            String response = new HttpService().connect(Config.APP_URL + "?q=" + cityName + "&appid=" + Config.APP_ID + "&lang=pl");
             parseJson(response);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-//
-//
 //    private void connectByCityName() {
 //
 //        System.out.println("Podaj nazwę miasta: ");
-//
 //        String cityName = scanner.next();
-//
 //        String response = connectByCityName(cityName);
-//
 //        parseJson(response);
-//
 //    }
-//
 //    public String connectByCityName(String cityName) {
-//
 //        String response = null;
-//
 //        try {
-//
 //            response = new HttpService().connect(Config.APP_URL + "?q=" + cityName + "&appid=" + Config.APP_ID);
 //
 //        } catch (IOException e) {
 //
 //            e.printStackTrace();
-//
 //        }
-//
 //        return response;
-//
 //    }
-
-
-
 
     private void connectByZipCode() {
         //TODO
@@ -93,37 +93,33 @@ public class MainApp implements Runnable {
     }
 
     private void parseJson(String json) {
-        //TODO
+
         double temp;
         int humidity;
-        int pressure;
-        int clouds;
-        String country;
 
         JSONObject rootObject = new JSONObject(json);
+
         if (rootObject.getInt("cod") == 200) {
             JSONObject mainObject = rootObject.getJSONObject("main");
             JSONObject sysObject = rootObject.getJSONObject("sys");
+            JSONObject cloudsObject = rootObject.getJSONObject("clouds");
+            JSONObject windObject = rootObject.getJSONObject("wind");
 
-country= sysObject.getString("country");
-
-            System.out.println(sysObject.getInt("sunrise"));
-            System.out.println(rootObject.getString("name"));
+            JSONArray weatherArrayObject = rootObject.getJSONArray("weather");
+            JSONObject one = (JSONObject) weatherArrayObject.get(0);
+            System.out.println("Opis Pogody" + one.getString("description"));
 
             DecimalFormat df = new DecimalFormat("#.##");
-            temp = mainObject.getDouble("temp");
-            temp = temp - 273;
-
             humidity = mainObject.getInt("humidity");
-            pressure = mainObject.getInt("pressure");
-            JSONObject cloudsObject = rootObject.getJSONObject("clouds");
-            clouds = cloudsObject.getInt("all");
 
-            System.out.println("Temperatura: " + df.format(temp) + " \u00b0C");
+            System.out.println(rootObject.getString("name"));
+            System.out.println("Temperatura: " + df.format(mainObject.getDouble("temp") - 273) + " \u00b0C");
+            System.out.println("Temp.max: " + df.format(mainObject.getDouble("temp_max") - 273) + " \u00b0C");
+            System.out.println("Temp.średnia: " + df.format((mainObject.getDouble("temp_max") - 273 + mainObject.getDouble("temp_min") - 273) / 2) + " \u00b0C");
+            System.out.println("Zachmurzenie: " + cloudsObject.getInt("all") + "%");
+            System.out.println("Wiatr" + windObject.getDouble("speed") + "km/h");
+            System.out.println("Ciśnienie: " + mainObject.getInt("pressure") + " hPa");
             System.out.println("Wilgotność: " + humidity + " %");
-            System.out.println("Zachmurzenie: " + clouds + "%");
-            System.out.println("Ciśnienie: " + pressure + " hPa");
-
         } else {
             System.out.println("Error");
         }
