@@ -50,35 +50,36 @@ public class MainApp implements Runnable {
 
     }
 
-    private void connectByCityName() {
-        //TODO
-        System.out.println("Podaj nazwę miasta: ");
-        String cityName = scanner.next();
-        try {
-            String response = new HttpService().connect(Config.APP_URL + "?q=" + cityName + "&appid=" + Config.APP_ID + "&lang=pl");
-            parseJson(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 //    private void connectByCityName() {
-//
+//        //TODO
 //        System.out.println("Podaj nazwę miasta: ");
 //        String cityName = scanner.next();
-//        String response = connectByCityName(cityName);
-//        parseJson(response);
-//    }
-//    public String connectByCityName(String cityName) {
-//        String response = null;
 //        try {
-//            response = new HttpService().connect(Config.APP_URL + "?q=" + cityName + "&appid=" + Config.APP_ID);
-//
+//            String response = new HttpService().connect(Config.APP_URL + "?q=" + cityName + "&appid=" + Config.APP_ID + "&lang=pl");
+//            parseJson(response);
 //        } catch (IOException e) {
-//
 //            e.printStackTrace();
 //        }
-//        return response;
 //    }
+
+    private void connectByCityName() {
+
+        System.out.println("Podaj nazwę miasta: ");
+        String cityName = scanner.next();
+        String response = connectByCityName(cityName);
+        parseJson(response);
+    }
+    public String connectByCityName(String cityName) {
+        String response = null;
+        try {
+            response = new HttpService().connect(Config.APP_URL + "?q=" + cityName + "&appid=" + Config.APP_ID + "&lang=pl");
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+        return response;
+    }
 
     private void connectByZipCode() {
         //TODO
@@ -92,10 +93,8 @@ public class MainApp implements Runnable {
         }
     }
 
-    private void parseJson(String json) {
 
-        double temp;
-        int humidity;
+    private void parseJson(String json) {
 
         JSONObject rootObject = new JSONObject(json);
 
@@ -110,7 +109,6 @@ public class MainApp implements Runnable {
             System.out.println("Opis Pogody" + one.getString("description"));
 
             DecimalFormat df = new DecimalFormat("#.##");
-            humidity = mainObject.getInt("humidity");
 
             System.out.println(rootObject.getString("name"));
             System.out.println("Temperatura: " + df.format(mainObject.getDouble("temp") - 273) + " \u00b0C");
@@ -119,7 +117,7 @@ public class MainApp implements Runnable {
             System.out.println("Zachmurzenie: " + cloudsObject.getInt("all") + "%");
             System.out.println("Wiatr" + windObject.getDouble("speed") + "km/h");
             System.out.println("Ciśnienie: " + mainObject.getInt("pressure") + " hPa");
-            System.out.println("Wilgotność: " + humidity + " %");
+            System.out.println("Wilgotność: " + mainObject.getInt("humidity") + " %");
         } else {
             System.out.println("Error");
         }
